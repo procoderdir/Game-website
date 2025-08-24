@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PlayArcade — Free Browser Games</title>
+  <meta name="description" content="A lightweight game website with Snake and Tic‑Tac‑Toe, high scores, themes, and a game hub layout." />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎮</text></svg>' />
+  <style>
+    :root{--bg:#0b1220;--card:#0f172a;--text:#e5e7eb;--muted:#9ca3af;--primary:#22d3ee;--accent:#818cf8;--border:#1f2937;--radius:16px;--shadow:0 10px 30px rgba(0,0,0,.35)}
+    [data-theme="light"]{--bg:#f8fafc;--card:#ffffff;--text:#0f172a;--muted:#334155;--primary:#2563eb;--accent:#7c3aed;--border:#e5e7eb;--shadow:0 10px 20px rgba(0,0,0,.08)}
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(1200px 600px at 10% -10%, rgba(34,211,238,.15), transparent 50%), radial-gradient(1200px 600px at 110% 10%, rgba(129,140,248,.15), transparent 45%), var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;line-height:1.6}
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+    .container{width:min(1100px,92%);margin-inline:auto}
+    header{position:sticky;top:0;background:color-mix(in srgb, var(--bg) 75%, transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--border);z-index:50}
+    .nav{display:flex;align-items:center;justify-content:space-between;padding:.8rem 0}
+    .logo{display:flex;align-items:center;gap:.6rem;font-weight:800}
+    .logo-badge{width:36px;height:36px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(160deg,var(--accent),var(--primary));box-shadow:var(--shadow);color:white}
+    .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.65rem 1rem;border:1px solid var(--border);border-radius:999px;background:var(--card);box-shadow:var(--shadow);cursor:pointer}
+    .btn.primary{background:linear-gradient(160deg,var(--primary),var(--accent));color:white;border-color:transparent}
+    main{padding:2rem 0}
+    .grid{display:grid;gap:1rem}
+    .grid-3{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+    .card{border:1px solid var(--border);background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .card-body{padding:1rem}
+
+    /* Hub */
+    .hero{padding:3rem 0 1rem}
+    .title{font-size:clamp(2rem,4vw,3rem);line-height:1.1;margin:.4rem 0}
+    .muted{color:var(--muted)}
+    .pill{display:inline-flex;align-items:center;gap:.4rem;border:1px solid var(--border);padding:.25rem .55rem;border-radius:999px;background:var(--card)}
+
+    /* Tabs */
+    .tabs{display:flex;gap:.5rem;flex-wrap:wrap}
+    .tab{padding:.5rem .8rem;border:1px solid var(--border);border-radius:999px;background:var(--card);cursor:pointer}
+    .tab[aria-selected="true"]{outline:2px solid var(--primary)}
+    .panel{display:none}
+    .panel[aria-hidden="false"]{display:block}
+
+    /* Game areas */
+    .playbar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin:.5rem 0}
+    .stat{display:inline-flex;gap:.35rem;align-items:center;padding:.25rem .55rem;border:1px solid var(--border);border-radius:999px;background:var(--card)}
+    canvas{width:100%;height:auto;border-radius:12px;border:1px solid var(--border);background:#020617}
+    .controls{display:flex;gap:.5rem;flex-wrap:wrap}
+    .kbd{border:1px solid var(--border);border-radius:8px;padding:.15rem .4rem;background:var(--card)}
+
+    /* TicTacToe */
+    .ttt{display:grid;grid-template-columns:repeat(3,100px);gap:.5rem;justify-content:center;margin:1rem auto}
+    .cell{width:100px;height:100px;display:grid;place-items:center;font-size:2.2rem;border:1px solid var(--border);border-radius:12px;background:var(--card);cursor:pointer}
+
+    /* Sidebar */
+    .side{position:sticky;top:70px;align-self:start}
+    .list{list-style:none;margin:0;padding:0;display:grid;gap:.5rem}
+    .list li{display:flex;justify-content:space-between;border:1px solid var(--border);border-radius:10px;padding:.5rem .7rem;background:var(--card)}
+
+    footer{border-top:1px solid var(--border);padding:1.5rem 0;text-align:center;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <a class="sr-only" href="#main">Skip to content</a>
+  <header>
+    <div class="container nav">
+      <div class="logo"><span class="logo-badge">🎮</span><span>PlayArcade</span></div>
+      <div style="display:flex;gap:.5rem;align-items:center">
+        <button id="themeBtn" class="btn" title="Toggle theme">🌓 Theme</button>
+        <a class="btn primary" href="#games">Play now</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="container">
+    <section class="hero">
+      <span class="pill">New</span>
+      <h1 class="title">Play quick, classic games right in your browser.</h1>
+      <p class="muted">No downloads. No tracking. Just fun. Save your high scores locally and challenge your friends.</p>
+    </section>
+
+    <section id="games" class="grid" style="grid-template-columns:1.2fr .8fr">
+      <div class="card">
+        <div class="card-body">
+          <div class="tabs" role="tablist" aria-label="Games">
+            <button class="tab" role="tab" aria-selected="true" aria-controls="snake-panel" id="snake-tab">🐍 Snake</button>
+            <button class="tab" role="tab" aria-selected="false" aria-controls="ttt-panel" id="ttt-tab">⭕❌ Tic‑Tac‑Toe</button>
+          </div>
+
+          <!-- SNAKE -->
+          <section id="snake-panel" class="panel" role="tabpanel" aria-hidden="false" aria-labelledby="snake-tab">
+            <div class="playbar">
+              <span class="stat">Score: <strong id="score">0</strong></span>
+              <span class="stat">Best: <strong id="best">0</strong></span>
+              <label class="stat">Speed
+                <select id="speed" style="background:transparent;color:inherit;border:none">
+                  <option value="140">Chill</option>
+                  <option value="110">Normal</option>
+                  <option value="80">Fast</option>
+                  <option value="60">Insane</option>
+                </select>
+              </label>
+              <div class="controls">
+                <button id="startBtn" class="btn">▶️ Start</button>
+                <button id="pauseBtn" class="btn">⏸️ Pause</button>
+                <button id="resetBtn" class="btn">🔄 Reset</button>
+              </div>
+            </div>
+            <div class="muted">Controls: <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> or arrow keys</div>
+            <canvas id="board" width="480" height="480" aria-label="Snake game board"></canvas>
+          </section>
+
+          <!-- TICTACTOE -->
+          <section id="ttt-panel" class="panel" role="tabpanel" aria-hidden="true" aria-labelledby="ttt-tab">
+            <div class="playbar">
+              <span class="stat">You are: <strong>❌</strong></span>
+              <div class="controls">
+                <button id="tttNew" class="btn">New game</button>
+                <label class="stat">Mode
+                  <select id="tttMode" style="background:transparent;color:inherit;border:none">
+                    <option value="easy">Easy</option>
+                    <option value="hard">Hard (AI)</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div id="tttStatus" class="muted">Your move.</div>
+            <div id="ttt" class="ttt" role="grid" aria-label="Tic Tac Toe board"></div>
+          </section>
+        </div>
+      </div>
+
+      <aside class="side">
+        <div class="card">
+          <div class="card-body">
+            <h3 style="margin:.2rem 0 1rem">🏆 High Scores</h3>
+            <ul id="scores" class="list" aria-live="polite"></ul>
+          </div>
+        </div>
+        <div class="card" style="margin-top:1rem">
+          <div class="card-body">
+            <h3 style="margin:.2rem 0 .5rem">About</h3>
+            <p class="muted">This mini‑arcade is built in one HTML file with vanilla JS. No trackers or external libs. Fork it and add your own games!</p>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="grid grid-3" style="margin-top:2rem">
+      <div class="card"><div class="card-body"><h3>💡 Tip</h3><p class="muted">Use the Speed dropdown in Snake to make it harder and rack up points faster.</p></div></div>
+      <div class="card"><div class="card-body"><h3>🕹️ Coming Soon</h3><p class="muted">Breakout and Memory Match. Want them now? Ask and I’ll add them.</p></div></div>
+      <div class="card"><div class="card-body"><h3>🌗 Themes</h3><p class="muted">Click <strong>🌓 Theme</strong> to switch between light and dark — it remembers your choice.</p></div></div>
+    </section>
+  </main>
+
+  <footer>© <span id="year"></span> PlayArcade</footer>
+
+  <script>
+    // === Theme toggle
+    const root=document.documentElement, themeBtn=document.getElementById('themeBtn');
+    const saved=localStorage.getItem('theme'); if(saved) root.setAttribute('data-theme',saved);
+    themeBtn.addEventListener('click',()=>{const next=root.getAttribute('data-theme')==='light'?'dark':'light';root.setAttribute('data-theme',next);localStorage.setItem('theme',next)});
+    document.getElementById('year').textContent=new Date().getFullYear();
+
+    // === Tabs
+    const tabs=[...document.querySelectorAll('.tab')];
+    const panels=[...document.querySelectorAll('.panel')];
+    tabs.forEach(t=>t.addEventListener('click',()=>{
+      tabs.forEach(x=>x.setAttribute('aria-selected','false'));
+      panels.forEach(p=>p.setAttribute('aria-hidden','true'));
+      t.setAttribute('aria-selected','true');
+      document.getElementById(t.getAttribute('aria-controls')).setAttribute('aria-hidden','false');
+    }));
+
+    // === High scores (localStorage)
+    const SCORE_KEY='playarcade.highscores';
+    function getScores(){try{return JSON.parse(localStorage.getItem(SCORE_KEY))||{snake:[],ttt:[]}}catch{return {snake:[],ttt:[]}}}
+    function saveScores(data){localStorage.setItem(SCORE_KEY,JSON.stringify(data));renderScores()}
+    function addScore(game,score){const data=getScores();data[game].push({date:Date.now(),score});data[game].sort((a,b)=>b.score-a.score);data[game]=data[game].slice(0,10);saveScores(data)}
+    function bestScore(game){const d=getScores();return d[game][0]?.score||0}
+    function renderScores(){const ul=document.getElementById('scores');const d=getScores();
+      ul.innerHTML='';
+      const make=(title,arr)=>{const li=document.createElement('li');li.innerHTML=`<strong>${title}</strong> <span>${arr[0]?arr[0].score:0}</span>`;ul.appendChild(li)}
+      make('Snake',d.snake);make('Tic‑Tac‑Toe (wins)',d.ttt);
+    }
+    renderScores();
+
+    // === Snake Game
+    const board=document.getElementById('board'); const ctx=board.getContext('2d');
+    const scoreEl=document.getElementById('score'); const bestEl=document.getElementById('best');
+    const speedSel=document.getElementById('speed'); const startBtn=document.getElementById('startBtn');
+    const pauseBtn=document.getElementById('pauseBtn'); const resetBtn=document.getElementById('resetBtn');
+
+    const SIZE=24; // 24x24 grid on 480px => 20px cells
+    let tick=110, loop=null, running=false, dir={x:1,y:0}, nextDir={x:1,y:0};
+    let snake, food, score;
+
+    function initSnake(){
+      snake=[{x:12,y:12},{x:11,y:12},{x:10,y:12}];
+      placeFood(); score=0; updateHUD(); draw();
+    }
+    function placeFood(){
+      do{food={x:Math.floor(Math.random()*SIZE), y:Math.floor(Math.random()*SIZE)}}
+      while(snake?.some(s=>s.x===food.x&&s.y===food.y));
+    }
+    function updateHUD(){scoreEl.textContent=score;bestEl.textContent=Math.max(bestScore('snake'),score)}
+    function draw(){
+      ctx.fillStyle='#020617'; ctx.fillRect(0,0,board.width,board.height);
+      // grid (subtle)
+      ctx.strokeStyle='rgba(255,255,255,.04)';
+      for(let i=0;i<=SIZE;i++){ctx.beginPath();ctx.moveTo(i*(board.width/SIZE),0);ctx.lineTo(i*(board.width/SIZE),board.height);ctx.stroke();}
+      for(let j=0;j<=SIZE;j++){ctx.beginPath();ctx.moveTo(0,j*(board.height/SIZE));ctx.lineTo(board.width,j*(board.height/SIZE));ctx.stroke();}
+      // food
+      drawCell(food.x,food.y,'#22d3ee');
+      // snake
+      snake.forEach((s,i)=>drawCell(s.x,s.y,i? '#a78bfa':'#22c55e'));
+    }
+    function drawCell(x,y,color){const cs=board.width/SIZE;ctx.fillStyle=color;ctx.fillRect(x*cs+2,y*cs+2,cs-4,cs-4);}
+
+    function step(){
+      const head={x:(snake[0].x+nextDir.x+SIZE)%SIZE, y:(snake[0].y+nextDir.y+SIZE)%SIZE};
+      dir=nextDir;
+      // collision with self
+      if(snake.some(s=>s.x===head.x&&s.y===head.y)){gameOver();return}
+      snake.unshift(head);
+      if(head.x===food.x&&head.y===food.y){score++; updateHUD(); placeFood();}
+      else snake.pop();
+      draw();
+    }
+
+    function start(){if(running) return; running=true; loop=setInterval(step,tick)}
+    function pause(){running=false; clearInterval(loop)}
+    function reset(){pause(); initSnake()}
+    function gameOver(){pause(); addScore('snake',score); bestEl.textContent=bestScore('snake'); alert('Game over! Score: '+score);}
+
+    // controls
+    window.addEventListener('keydown',e=>{
+      const k=e.key.toLowerCase();
+      if(['arrowup','w'].includes(k) && dir.y!==1) nextDir={x:0,y:-1};
+      if(['arrowdown','s'].includes(k) && dir.y!==-1) nextDir={x:0,y:1};
+      if(['arrowleft','a'].includes(k) && dir.x!==1) nextDir={x:-1,y:0};
+      if(['arrowright','d'].includes(k) && dir.x!==-1) nextDir={x:1,y:0};
+      if(k===' '){running?pause():start()}
+    });
+    speedSel.addEventListener('change',()=>{tick=parseInt(speedSel.value,10); if(running){pause(); start()}})
+    startBtn.addEventListener('click',start); pauseBtn.addEventListener('click',pause); resetBtn.addEventListener('click',reset);
+    initSnake();
+
+    // === TicTacToe
+    const ttt=document.getElementById('ttt'); const tttStatus=document.getElementById('tttStatus');
+    const tttNew=document.getElementById('tttNew'); const tttMode=document.getElementById('tttMode');
+    let boardTTT, turn='X', over=false;
+
+    function initTTT(){boardTTT=Array(9).fill(''); turn='X'; over=false; renderTTT(); tttStatus.textContent='Your move.'}
+    function renderTTT(){
+      ttt.innerHTML='';
+      boardTTT.forEach((v,i)=>{
+        const b=document.createElement('button'); b.className='cell'; b.role='gridcell'; b.ariaLabel='Cell '+(i+1);
+        b.textContent=v; b.disabled=!!v||over; b.addEventListener('click',()=>move(i)); ttt.appendChild(b);
+      });
+    }
+    function lines(){return[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]]}
+    function winner(b){for(const [a,c,d] of lines()){if(b[a]&&b[a]===b[c]&&b[a]===b[d]) return b[a]} return b.includes('')?null:'draw'}
+    function move(i){ if(boardTTT[i]||over) return; boardTTT[i]='X'; renderTTT();
+      let w=winner(boardTTT); if(w){endTTT(w); return}
+      if(tttMode.value==='easy') aiEasy(); else aiHard();
+      w=winner(boardTTT); if(w){endTTT(w)} else tttStatus.textContent='Your move.'
+    }
+    function aiEasy(){ const empties=boardTTT.map((v,i)=>v?null:i).filter(v=>v!==null); const i=empties[Math.floor(Math.random()*empties.length)]; boardTTT[i]='O'; renderTTT(); tttStatus.textContent='AI moved.'}
+    function aiHard(){ // minimax
+      const best=bestMove(boardTTT,'O'); boardTTT[best]='O'; renderTTT(); tttStatus.textContent='AI moved.'}
+    function bestMove(b,player){ let bestScore=-Infinity, moveIdx=0; for(let i=0;i<9;i++){ if(b[i]) continue; b[i]=player; const sc=minimax(b,false); b[i]=''; if(sc>bestScore){bestScore=sc; moveIdx=i} } return moveIdx }
+    function minimax(b,isMax){ const w=winner(b); if(w==='O') return 1; if(w==='X') return -1; if(w==='draw') return 0; let best=isMax?-Infinity:Infinity; const player=isMax?'O':'X'; for(let i=0;i<9;i++){ if(b[i]) continue; b[i]=player; const val=minimax(b,!isMax); b[i]=''; best=isMax?Math.max(best,val):Math.min(best,val)} return best }
+    function endTTT(w){ over=true; renderTTT(); if(w==='draw'){ tttStatus.textContent='Draw!'; return } tttStatus.textContent=(w==='X'?'You win! 🎉':'You lost 😅'); if(w==='X') addScore('ttt',1); renderScores(); }
+    tttNew.addEventListener('click',initTTT); tttMode.addEventListener('change',initTTT); initTTT();
+  </script>
+</body>
+</html>
